@@ -73,7 +73,7 @@ public class AuthorizationServerConfig {
 
     @Bean
     public JWKSource<SecurityContext> jwkSource() throws Exception {
-        String keyStorePass = "caraqueñoMMgv";
+        String keyStorePass = "CaraquenoMMgv";
         String alias        = "auth-key";
 
         KeyStore ks = KeyStore.getInstance("PKCS12");
