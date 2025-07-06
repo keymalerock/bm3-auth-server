@@ -1,0 +1,19 @@
+[ req ]
+distinguished_name = dn
+x509_extensions = v3_req
+prompt = no
+
+[ dn ]
+C  = VE
+ST = Táchira
+L  = San Cristóbal
+O  = BM3
+CN = pciviltachira.gob.ve
+
+[ v3_req ]
+subjectAltName = @alt_names
+
+[ alt_names ]
+DNS.1 = pciviltachira.gob.ve
+DNS.2 = localhost
+IP.1  = 127.0.0.1
