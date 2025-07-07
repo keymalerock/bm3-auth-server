@@ -18,9 +18,6 @@ import org.springframework.security.oauth2.server.authorization.settings.*;
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
-import org.springframework.security.web.util.matcher.OrRequestMatcher;
-import org.springframework.security.web.util.matcher.RequestMatcher;
 
 import java.io.InputStream;
 import java.security.KeyStore;
@@ -32,24 +29,35 @@ public class AuthorizationServerConfig {
 
     @Bean
     @Order(1)
-    public SecurityFilterChain authServerSecurityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain authServerSecurityFilterChain(HttpSecurity http)
+            throws Exception {
         System.out.println("Entró al SecurityFilterChain: " + this.getClass().getSimpleName() + " (authServerSecurityFilterChain)");
-        OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
-                new OAuth2AuthorizationServerConfigurer();
-        // Combina los endpoints del authorization server con los de discovery
-        RequestMatcher endpointsMatcher = new OrRequestMatcher(
-                authorizationServerConfigurer.getEndpointsMatcher(),
-                new AntPathRequestMatcher("/.well-known/openid-configuration"),
-                new AntPathRequestMatcher("/.well-known/jwks.json"));
-
+        OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer();
         http
-                .securityMatcher(endpointsMatcher)
+                .securityMatcher(
+                        "/oauth2/**",
+                        "/.well-known/**",
+                        "/connect/**",
+                        "/userinfo"
+                )
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/.well-known/openid-configuration", "/.well-known/jwks.json").permitAll()
+                        .requestMatchers(
+                                "/.well-known/openid-configuration",
+                                "/.well-known/jwks.json",
+                                "/.well-known/oauth-authorization-server",
+                                "/oauth2/**"
+                        ).permitAll()
                         .anyRequest().authenticated()
                 )
-                .csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher))
-                .with(authorizationServerConfigurer, Customizer.withDefaults());
+                .csrf(csrf -> csrf.ignoringRequestMatchers(
+                        "/.well-known/**",
+                        "/oauth2/**",
+                        "/connect/**",
+                        "/oidc/**"
+                ))
+                .with(authorizationServerConfigurer, configurer ->
+                        configurer.oidc(Customizer.withDefaults())
+                );
 
         return http
                 .formLogin(Customizer.withDefaults())
@@ -63,7 +71,7 @@ public class AuthorizationServerConfig {
 
     @Bean
     public JWKSource<SecurityContext> jwkSource() throws Exception {
-        String keyStorePass = "CaraquenoMMgv";
+        String keyStorePass = "123456";
         String alias        = "auth-key";
 
         KeyStore ks = KeyStore.getInstance("PKCS12");
@@ -72,6 +80,7 @@ public class AuthorizationServerConfig {
         }
 
         RSAKey rsaKey = RSAKey.load(ks, alias, keyStorePass.toCharArray());
+        System.out.println("RSAKey cagado: " + rsaKey);
         JWKSet jwkSet = new JWKSet(rsaKey.toPublicJWK());
         return (jwkSelector, context) -> jwkSelector.select(jwkSet);
     }

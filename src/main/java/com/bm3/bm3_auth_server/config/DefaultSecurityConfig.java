@@ -19,12 +19,24 @@ public class DefaultSecurityConfig {
     public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
         System.out.println("Entró al SecurityFilterChain: " + this.getClass().getSimpleName() + " (defaultSecurityFilterChain)");
         http
+                .securityMatcher(request ->
+                        !request.getRequestURI().startsWith("/oauth2/") &&
+                                !request.getRequestURI().startsWith("/.well-known/") &&
+                                !request.getRequestURI().startsWith("/connect/")
+                )
                 .authorizeHttpRequests(auth ->
                         auth
-                                //  .requestMatchers("/api/auth/**").permitAll()
-                                .requestMatchers("/.well-known/**").permitAll()
+                                .requestMatchers("/error", "/login").permitAll()
                                 .requestMatchers("/admin/**").hasRole("ADMIN")
                                 .anyRequest().authenticated()
+                )
+                .formLogin(form -> form
+                        .loginPage("/login")
+                        .permitAll()
+                )
+                .logout(logout -> logout
+                        .logoutSuccessUrl("/")
+                        .permitAll()
                 )
                 .httpBasic(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable);
