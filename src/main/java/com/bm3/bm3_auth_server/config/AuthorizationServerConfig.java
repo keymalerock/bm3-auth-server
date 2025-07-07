@@ -18,6 +18,9 @@ import org.springframework.security.oauth2.server.authorization.settings.*;
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.util.matcher.OrRequestMatcher;
+import org.springframework.security.web.util.matcher.RequestMatcher;
 
 import java.io.InputStream;
 import java.security.KeyStore;
@@ -30,14 +33,22 @@ public class AuthorizationServerConfig {
     @Bean
     @Order(1)
     public SecurityFilterChain authServerSecurityFilterChain(HttpSecurity http) throws Exception {
+        System.out.println("Entró al SecurityFilterChain: " + this.getClass().getSimpleName() + " (authServerSecurityFilterChain)");
         OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
                 new OAuth2AuthorizationServerConfigurer();
+        // Combina los endpoints del authorization server con los de discovery
+        RequestMatcher endpointsMatcher = new OrRequestMatcher(
+                authorizationServerConfigurer.getEndpointsMatcher(),
+                new AntPathRequestMatcher("/.well-known/openid-configuration"),
+                new AntPathRequestMatcher("/.well-known/jwks.json"));
 
-        http.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+        http
+                .securityMatcher(endpointsMatcher)
                 .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers("/.well-known/openid-configuration", "/.well-known/jwks.json").permitAll()
                         .anyRequest().authenticated()
                 )
-                .csrf(csrf -> csrf.ignoringRequestMatchers(authorizationServerConfigurer.getEndpointsMatcher()))
+                .csrf(csrf -> csrf.ignoringRequestMatchers(endpointsMatcher))
                 .with(authorizationServerConfigurer, Customizer.withDefaults());
 
         return http
@@ -45,27 +56,6 @@ public class AuthorizationServerConfig {
                 .build();
     }
 
-    /* @Bean
-    public RegisteredClientRepository registeredClientRepository(PasswordEncoder encoder) {
-        RegisteredClient client = RegisteredClient.withId(UUID.randomUUID().toString())
-                .clientId("bm3-client")
-                .clientSecret(encoder.encode("secret"))
-                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
-                .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-                .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
-                .redirectUri("http://localhost:8081/login/oauth2/code/bm3-client")
-                .scope(OidcScopes.OPENID)
-                .scope("read")
-                .scope("write")
-                .tokenSettings(TokenSettings.builder()
-                        .accessTokenTimeToLive(Duration.ofHours(2))    // 2 horas
-                        .refreshTokenTimeToLive(Duration.ofDays(7))
-                        .reuseRefreshTokens(false)
-                        .build())
-                .build();
-
-        return new InMemoryRegisteredClientRepository(client);
-    }*/
     @Bean
     public RegisteredClientRepository registeredClientRepository(JdbcTemplate jdbcTemplate) {
         return new JdbcRegisteredClientRepository(jdbcTemplate);
