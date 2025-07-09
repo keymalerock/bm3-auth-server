@@ -47,7 +47,7 @@ public class ClientRegistrationLoader {
                         .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
                         .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
                         .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
-                        .redirectUri("http://localhost:4200/callback") // Cambia esto al redirect real de tu frontend
+                        .redirectUri("https://oauth.pstmn.io/v1/callback") // Cambia esto al redirect real de tu frontend
                         .scope("openid")
                         .scope("profile")
                         .scope("email")
