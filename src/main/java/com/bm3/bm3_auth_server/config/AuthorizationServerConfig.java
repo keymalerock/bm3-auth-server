@@ -80,7 +80,7 @@ public class AuthorizationServerConfig {
         }
 
         RSAKey rsaKey = RSAKey.load(ks, alias, keyStorePass.toCharArray());
-        System.out.println("RSAKey cagado: " + rsaKey);
+        //System.out.println("RSAKey cagado: " + rsaKey);
         JWKSet jwkSet = new JWKSet(rsaKey.toPublicJWK());
         return (jwkSelector, context) -> jwkSelector.select(jwkSet);
     }
