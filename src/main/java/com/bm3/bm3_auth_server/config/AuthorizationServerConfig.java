@@ -3,6 +3,7 @@ package com.bm3.bm3_auth_server.config;
 import com.nimbusds.jose.jwk.*;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
+import lombok.NonNull;
 import org.springframework.context.annotation.*;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.io.ClassPathResource;
@@ -18,6 +19,8 @@ import org.springframework.security.oauth2.server.authorization.settings.*;
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.io.InputStream;
 import java.security.KeyStore;
@@ -55,6 +58,7 @@ public class AuthorizationServerConfig {
                         "/connect/**",
                         "/oidc/**"
                 ))
+                //.with(new OAuth2AuthorizationServerConfigurer(), Customizer.withDefaults());
                 .with(authorizationServerConfigurer, configurer ->
                         configurer.oidc(Customizer.withDefaults())
                 );
@@ -62,6 +66,20 @@ public class AuthorizationServerConfig {
         return http
                 .formLogin(Customizer.withDefaults())
                 .build();
+    }
+
+    @Bean
+    public WebMvcConfigurer corsConfigurer() {
+        return new WebMvcConfigurer() {
+            @Override
+            public void addCorsMappings(@NonNull CorsRegistry registry) {
+                registry.addMapping("/**") // Aplica a todos los endpoints
+                        .allowedOrigins("http://localhost:4200") // Tu frontend Angular
+                        .allowedMethods("GET", "POST", "PUT",  "OPTIONS")
+                        .allowedHeaders("*")
+                        .allowCredentials(true); // Importante si usas cookies/session
+            }
+        };
     }
 
     @Bean
@@ -81,7 +99,7 @@ public class AuthorizationServerConfig {
 
         RSAKey rsaKey = RSAKey.load(ks, alias, keyStorePass.toCharArray());
         //System.out.println("RSAKey cagado: " + rsaKey);
-        JWKSet jwkSet = new JWKSet(rsaKey.toPublicJWK());
+        JWKSet jwkSet = new JWKSet(rsaKey);
         return (jwkSelector, context) -> jwkSelector.select(jwkSet);
     }
 
