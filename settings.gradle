@@ -1,1 +1,15 @@
 rootProject.name = 'bm3-auth-server'
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        maven {
+            url = "https://maven.pkg.github.com/keymalerock/bm3-library-shared"
+            credentials {
+                username = System.getenv("GITHUB_USERNAME")
+                password = System.getenv("GITHUB_TOKEN")
+            }
+        }
+        mavenCentral()
+    }
+}
